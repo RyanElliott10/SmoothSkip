@@ -1,7 +1,7 @@
 # SmoothSkip
 A tweak to smooth the transition between skipped songs in Spotify.
 
-Please note, this tweak is currently in development. Right now, SmoothSkip simply hooks into the SPTStatefulPlayer class and adjusts the `- (void)skipToNextTrack` method. While this may somewhat work, it is not the functionality I intended for when I began this project.
+Please note, this tweak is currently in development. Right now, SmoothSkip simply hooks into the SPTStatefulPlayer class and adjusts the `- (void)skipToNextTrack` method. While this may somewhat work, it is not the functionality I intended SmoothSkip to have when I began this project.
 
 In the future, I plan on adjusting the duration of the current track such that it is a set number of seconds longer than the current position. In doing this, I will (hopefully) force Spotify to invoke its own method (which I have not found) and smoothen the transition even more.
 
