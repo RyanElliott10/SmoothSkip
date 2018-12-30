@@ -97,10 +97,3 @@
 	NSLog(@"queue current metadata: %p", [[self currentMetadata] metadata]);
 	%orig;
 }
-
-- (id)setQueue:(id)arg1
-{
-	NSLog(@"HERE, RYAN");
-	return %orig(arg1);
-}
-%end
