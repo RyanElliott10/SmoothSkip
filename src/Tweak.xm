@@ -1,119 +1,106 @@
 // To get rid of Genius - will be removed once completed, it's
 // just aggravating me a lot right now
-%hook SPTGeniusService
--(_Bool)isEnabled {
-	return false;
-}
-%end
+// %hook SPTGeniusService
+// -(_Bool)isEnabled {
+// 	return false;
+// }
+// %end
 
-@interface SPTStatefulPlayerTrackPosition
-@property(nonatomic) float playbackSpeed;
-@property(nonatomic) double duration;
-@property(retain, nonatomic) SPTPlayerState *playerState;
-@property(nonatomic) double seekedPosition;
-@property(nonatomic) double positionTimestamp;
-@property(nonatomic) double positionBase;
-@property(readonly, nonatomic) double trackLength;
-- (double)deriveDuration;
-- (id)initWithPlayer:(id)arg1 queue:(id)arg2;
-@end
 
 @interface SPTPlayerTrack
-@property(nonatomic) double fadeOverlap;
+@property(copy, nonatomic) NSDictionary *metadata;
 @end
 
-@interface SPTStatefulPlayerQueue
-- (void)skipToPreviousTrack;
-- (void)skipToNextTrack;
-@property(readonly, nonatomic) SPTPlayerTrack *playingTrack;
+@interface SPTPlayerState
+@property(readonly, nonatomic) double position;
+@property(nonatomic) double duration;
+@property(retain, nonatomic) SPTPlayerTrack *track;
 @end
 
-@interface SPTStatefulPlayer
-@property(retain, nonatomic) SPTStatefulPlayerQueue *queue;
-@property(retain, nonatomic) SPTStatefulPlayerTrackPosition *trackPosition;
-- (void)seekTo:(double)arg1;
-- (double)duration;
-- (double)position;
+@interface SPTPlayerImpl
+@property(readonly, copy, nonatomic) SPTPlayerState *state;
+- (id)seekTo:(double)arg1;
 @end
 
 
-%hook SPTStatefulPlayer
-// Controls whether the track can be skipped
-- (void)skipToNextTrack
+%hook SPTPlayerImpl
+- (id)skipToNextTrackWithOptions:(id)arg1
 {
-	// %orig;
-	// Get an instance of SPTStatefulPlayerTrackPosition
-	// SPTStatefulPlayerTrackPosition *_statefulPlayerTrackPosition = [self trackPosition];
 	// Get an instance of SPTPlayerState
-	// SPTPlayerState *_playerState = [_statefulPlayerTrackPosition playerState];
-	// Get an instance of SPTStatefulPlayerQueue
-	// SPTStatefulPlayerQueue *_statefulPlayerQueue = [self queue];
+	SPTPlayerState *_lastState = [self state];
+
 	// Get an instance of SPTPlayerTrack
-	// SPTPlayerTrack *_playerTrack = _statefulPlayerQueue.playingTrack;
+	SPTPlayerTrack *_playerTrack = [_lastState track];
+	NSLog(@"init metadata: %p", _playerTrack.metadata);
 
-	// SPTStatefulPlayer class derives its duration from SPTStatefulPlayerTrackPosition
-	// double _duration = [self duration];
+	// Create new NSMutableDictionary since NSDictionary objects are immutable
+	NSMutableDictionary *newDict = [[NSMutableDictionary alloc] init];
+	// Copy metadata values to new dictionary
+	[newDict addEntriesFromDictionary:_playerTrack.metadata];
 
-	// It appears SPTStatefulPlayerTrackPosition uses SPTPlayerState's duration in its deriveDuration
-	// method. However, this doesn't actually change the duration of the item. Apparently, that would
-	// be far too convenient
-	// _playerState.duration = [self position];
+	// Grab the current position of the track
+	double _position = [_lastState position];
+	double _initDuration = [_lastState duration];
+	// Set the new track duration to the position + 8 seconds
+	NSNumber *_duration = [NSNumber numberWithFloat:(_position*10000)+8000];
+	NSString *_newDuration = [_duration stringValue];
 
-	// It appears it derives the duration from SPTStatefulPlayerQueue's information
+	// Change the duration key's value
+	[newDict setObject:_newDuration forKey:@"duration"];
+	// Set the old metadata dictionary to the new dictionary, except as NSDictionary object
+	_playerTrack.metadata = [[newDict copy] autorelease];
 
-	// NSLog(@"PreviousStatefulPlayerTrackPositionDuration: %f", [_statefulPlayerTrackPosition duration]);
-	// NSLog(@"StatefulPlayerPosition: %f", [self position]);
-	//
-	// // Change StatefulPlayerTrackPosition's duration
-	// _statefulPlayerTrackPosition.duration = [self position] + 6;
-	// NSLog(@"IntermediateStatefulPlayerTrackPositionDuration: %f", [_statefulPlayerTrackPosition duration]);
-	// [self seekTo:[_statefulPlayerTrackPosition duration]];
-	//
-	// _statefulPlayerTrackPosition.duration = [self position];
-	// NSLog(@"IntermediateStatefulPlayerTrackPositionDeriveDuration: %f", [_statefulPlayerTrackPosition deriveDuration]);
+	NSLog(@"new dictionary: %p", newDict);
+	NSLog(@"SPTPlayerTrack metadata dictionary: %p", [_playerTrack metadata]);
+	NSLog(@"position: %f", _position);
+	NSLog(@"duration: %@", [_duration stringValue]);
+	NSLog(@"Here's the skip track stack");
+	NSLog(@"%@",[NSThread callStackSymbols]);
 
-	// Set the track position to contain the new data
-	// [self setTrackPosition:_statefulPlayerTrackPosition];
-	// [NSThread sleepForTimeInterval:12.0f];
-
-
-	if ([self position] < [self duration]-8)
+	if (_position < _initDuration-6)
 	{
-		[self seekTo:[self duration]-8];
+		[self seekTo:[_lastState duration]-6];
+		return nil;
 	} else
 	{
-		%orig;
+		return %orig(arg1);
 	}
+}
 
-	// NSLog(@"CurrentStatefulPlayerTrackPositionDuration: %f", [_statefulPlayerTrackPosition duration]);
-	// NSLog(@"selfDuration: %f", [self duration]);
+- (id)pause:(id)arg1
+{
+	// Get an instance of SPTPlayerState
+	SPTPlayerState *_lastState = [self state];
+	// Get an instance of SPTPlayerTrack
+	SPTPlayerTrack *_playerTrack = [_lastState track];
+
+	NSMutableDictionary *newDict = [[NSMutableDictionary alloc] init];
+	// Copy metadata values to new dictionary
+	[newDict addEntriesFromDictionary:_playerTrack.metadata];
+	[newDict setObject:@"10" forKey:@"duration"];
+
+	NSLog(@"init pause current metadata: %p", _playerTrack.metadata);
+	_playerTrack.metadata = [[newDict copy] autorelease];
+	NSLog(@"pause metadata: %p", _playerTrack.metadata);
+	return %orig(arg1);
 }
 %end
 
 
-// @interface SPTPlayerState
-// @property(nonatomic) double duration;
-// @property(nonatomic, getter=isPaused) _Bool paused;
-// @property(nonatomic) double positionAsOfTimestamp;
-// @end
-//
-// %hook SPTPlayerState
-// - (double)duration
-// {
-// 	// NSLog(@"%@",[NSThread callStackSymbols]);
-// 	// NSLog(@"%@",[NSThread currentThread]);
-// 	return %orig;
-// }
-// %end
-//
-//
-// @interface SPTPlayerImpl
-// @end
-//
-// %hook SPTPlayerImpl
-// - (id)skipToNextTrackWithOptions:(id)arg1
-// {
-// 	NSLog(@"%@",[NSThread callStackSymbols]);
-// 	return %orig(arg1);
-// }
-// %end
+@interface SPTNowPlayingTrackMetadataQueue
+@property(readonly, nonatomic) SPTPlayerTrack *currentMetadata;
+@end
+
+%hook SPTNowPlayingTrackMetadataQueue
+- (void)skipToNextTrack
+{
+	NSLog(@"queue current metadata: %p", [[self currentMetadata] metadata]);
+	%orig;
+}
+
+- (id)setQueue:(id)arg1
+{
+	NSLog(@"HERE, RYAN");
+	return %orig(arg1);
+}
+%end
