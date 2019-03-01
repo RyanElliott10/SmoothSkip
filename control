@@ -3,7 +3,7 @@ Name: SmoothSkip
 Depends: mobilesubstrate
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: Smooth the transition between skipped songs in Spotify
+Description: An awesome MobileSubstrate tweak!
 Maintainer: Ryan Elliott
 Author: Ryan Elliott
 Section: Tweaks
