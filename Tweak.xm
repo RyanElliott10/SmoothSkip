@@ -19,7 +19,7 @@
 //    3a. This might be difficult because it might not have the right variables. To solve this, just add in variables in the 
 // 		  header and initalize them in the init method
 // 4. Pull the user's crossfade duration
-// 	  4a. This might end up in the sections setting of the tweak
+//    4a. This might end up in the sections setting of the tweak
 // 5. Test
 
 // Changing the duration here does not change the duration everywhere
@@ -54,6 +54,6 @@
 	NSLog(@"RYANLOG skipToNextTrack new currentMetadata duration: %@\n", [[self playingMetadata] metadata][@"duration"]);
 	NSLog(@"RYANLOG");
 
-	return %orig;
+	return (_position < _initDuration-12 ? nil : %orig);
 }
 %end
