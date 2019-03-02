@@ -1,73 +1,59 @@
+//
+//  Tweak.xm
+//  SmoothSkip
+//
+//  Created by Ryan Elliott on 12/17/18.
+//  Copyright © 2018 Ryan Elliott. All rights reserved.
+//
+
 #import "Tweak.h"
 
-// IDEA: When the user skips, call the new setCustomDuration in SPTPlayerState to change the duration
+// IMPLEMENTATION IDEA: On press of skip, change the song's duration in teh dict. Then, add an if somewhere in a controller that checks 
+// against the modified dictionary. If the position is within 8 of the new duration (pulled from the dict), call the method
+// that is normally called when the song naturally skips
 
-%hook SPTPlayerState
-- (double)getDuration
+// PLAN:
+// 1. Clean up existing code and remove unneeded methods
+// 2. Find the method that is called when the song naturally skips
+// 3. Add the conditional that checks against the dictionary
+//    3a. This might be difficult because it might not have the right variables. To solve this, just add in variables in the 
+// 		  header and initalize them in the init method
+// 4. Pull the user's crossfade duration
+// 	  4a. This might end up in the sections setting of the tweak
+// 5. Test
+
+// Changing the duration here does not change the duration everywhere
+%hook SPTNowPlayingTrackMetadataQueue
+
+// This calls willSkipToNext and skipToNextTrackWithOptions
+// Editing the dictionary in this method persists through other calls
+// This makes me think I don't need all the others
+- (void)skipToNextTrack
 {
-	return self.duration;
-}
+	NSLog(@"RYANLOG skipToNextTrack");
+	NSLog(@"RYANLOG skipToNextTrack playingMetadata: %@", [[self playingMetadata] metadata][@"duration"]);
+	NSLog(@"RYANLOG skipToNextTrack currentMetadata: %@", [[self currentMetadata] metadata][@"duration"]);
 
-%new
-- (SPTPlayerTrack *)setCustomDuration:(double)newDuration
-{
-	// Hook the duration ivar and change its value
-	NSLog(@"RYANLOG old duration: %f", [self duration]);
-	[self setDuration:newDuration];
-	NSLog(@"RYANLOG new duration: %f", [self duration]);
-	return [self track];
-}
-%end
+	double _duration = (double)[[[self playingMetadata] metadata][@"duration"] floatValue];
 
+	NSLog(@"RYANLOG skipToNextTrack all dict info: %@", [[self playingMetadata] metadata]);
 
-%hook SPTPlayerImpl
+	// Set duration in playingMetadata
+	NSMutableDictionary *newDict = [[NSMutableDictionary alloc] init];
+	[newDict addEntriesFromDictionary:[[self playingMetadata] metadata]];
+	[newDict setObject:@(_duration-20000) forKey:@"duration"];
+	[[self playingMetadata] setMetadata:newDict];
 
-- (id)seekTo:(double)arg1 options:(id)arg2
-{
-	NSLog(@"RYANLOG seekTo:(double)arg1 options:(id)arg2: %f %@", arg1, arg2);
-	return %orig(arg1, arg2);
-}
+	// Set duration in currentMetadata
+	newDict = [[NSMutableDictionary alloc] init];
+	[newDict addEntriesFromDictionary:[[self currentMetadata] metadata]];
+	[newDict setObject:@(_duration-20000) forKey:@"duration"];
+	[[self currentMetadata] setMetadata:newDict];
 
-- (id)seekTo:(double)arg1
-{
-	NSLog(@"RYANLOG seekTo:(double)arg1: %f", arg1);
-	return %orig(arg1);
-}
+	NSLog(@"RYANLOG skipToNextTrack new playingMetadata duration: %@", [[self playingMetadata] metadata][@"duration"]);
+	NSLog(@"RYANLOG skipToNextTrack new currentMetadata duration: %@\n", [[self playingMetadata] metadata][@"duration"]);
+	NSLog(@"RYANLOG");
 
-- (SPTask *)skipToNextTrackWithOptions:(id)arg1
-{
-	// Get an instance of SPTPlayerState
-	SPTPlayerState *_playerStateInstance = [self state];
-	// SPTPlayerTrack *_playerTrackInstance = [_playerStateInstance track];
-	double _initDuration = [_playerStateInstance duration];
-
-	return [self seekTo:_initDuration-8];
-	// return nil;
-
-	// NSLog(@"RYANLOG metadata: %@", [_playerTrackInstance metadata][@"duration"]);
-
-	// NSMutableDictionary *newDict = [[NSMutableDictionary alloc] init];
-	// NSDictionary *oldDict = (NSDictionary *)[_playerTrackInstance metadata];
-	// [newDict addEntriesFromDictionary:oldDict];
-	// [newDict setObject:@(1000) forKey:@"duration"];
-	// [_playerTrackInstance setMetadata:newDict];
-	// [newDict release];
-
-	// NSLog(@"RYANLOG metadata: %@", [_playerTrackInstance metadata][@"duration"]);
-
-	// // SPTask *tmp = %orig(arg1);
-	// // NSLog(@"RYANLOG %@", [tmp superclass]);
-	// // return tmp;
-
-	// double _position = [_playerStateInstance position];
-	// double _initDuration = [_playerStateInstance duration];
-
-	// if (_position < _initDuration-8) {
-	// 	// HBLogInfo(@"RYANLOG %@", [_playerStateInstance setCustomDuration:_position-8]);
-	// 	return [_playerStateInstance setCustomDuration:_position-8];
-	// } else {
-	// 	NSLog(@"RYANLOG %@", %orig(arg1));
-	// 	return %orig(arg1);
-	// }
+	return %orig;
 }
 %end
