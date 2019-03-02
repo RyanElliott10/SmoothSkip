@@ -1,2 +1,5 @@
 .theos/
 packages/
+Spotify/
+.DS_Store
+.vscode/
