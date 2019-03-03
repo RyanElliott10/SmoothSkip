@@ -1,27 +1,44 @@
+//
+//  Tweak.h
+//  SmoothSkip
+//
+//  Created by Ryan Elliott on 12/17/18.
+//  Copyright © 2018 Ryan Elliott. All rights reserved.
+//
+
+// List of classes with skipToNextTrack*:
+// SPTStatefulPlayer
+// SPTPlayerState
+// SPTNowPlayingTrackMetadataQueue
+// SPTPlayerImpl
+
+@interface SPTask
+@end
+
 @interface SPTPlayerTrack
 @property(copy, nonatomic) NSDictionary *metadata;
 @end
 
 @interface SPTPlayerState
+@property(readonly, nonatomic) NSDictionary *dictionary; // @synthesize dictionary=_dictionary;
+@property(readonly, nonatomic) NSDictionary *pageMetadata; // @synthesize pageMetadata=_pageMetadata;
+@property(readonly, nonatomic) NSDictionary *contextMetadata; // @synthesize contextMetadata=_contextMetadata;
+
 @property(readonly, nonatomic) double position;
 @property(nonatomic) double duration;
 @property(retain, nonatomic) SPTPlayerTrack *track;
 @property(nonatomic) double playbackSpeed;
-
-// new
-- (id)setCustomDuration:(double)newDuration;
 @end
-
 
 @interface SPTPlayerImpl
 @property(readonly, copy, nonatomic) SPTPlayerState *state;
-- (id)seekTo:(double)arg1 options:(id)arg2;
-- (id)seekTo:(double)arg1;
-- (id)skipToNextTrackWithOptions:(id)arg1;
+
+- (SPTask *)skipToNextTrackWithOptions:(id)arg1;
 @end
 
-@interface SPTask
-@property(readonly, copy) NSString *description;
-@property(readonly) unsigned long long hash;
-@property(readonly) Class superclass;
+@interface SPTNowPlayingTrackMetadataQueue
+@property(readonly, nonatomic) SPTPlayerTrack *playingMetadata;
+@property(readonly, nonatomic) SPTPlayerTrack *currentMetadata;
+
+- (void)skipToNextTrack;
 @end
