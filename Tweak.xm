@@ -22,11 +22,15 @@
 //    4a. This might end up in the sections setting of the tweak
 // 5. Test
 
-// Changed the data in here persists through a single state. As soon as a user
+// Changeing the data in here persists through a single state. As soon as a user
 // changes the state (i.e. pauses), the data is reset, which is actually fine.
+
 %hook SPTPlayerImpl
 - (SPTask *)skipToNextTrackWithOptions:(id)arg1
 {
+	NSLog(@"RYANLOG logging is working");
+	return %orig(arg1);
+	/*
 	// Get an instance of SPTPlayerState
 	SPTPlayerState *_playerStateInstance = [self state];
 	SPTPlayerTrack *_playerTrackInstance = [_playerStateInstance track];
@@ -44,5 +48,17 @@
 	[_playerStateInstance setDuration:(double)[[_playerTrackInstance metadata][@"duration"] floatValue]];
 	
 	return (_position < _initDuration - 12 ? nil : %orig);
+	*/
+}
+%end
+
+
+// MARK: - Finding the method that is called when a track naturally advances
+
+%hook SPTNowPlayingInformationUnitViewModel
+- (id)getMainArtistNameFromTrackMetadata:(id)arg1
+{
+	NSLog(@"RYANLOG getArtistsFromTrackMetadata arg1: %@", arg1);
+	return %orig(arg1);
 }
 %end

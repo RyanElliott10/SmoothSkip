@@ -17,6 +17,8 @@
 
 @interface SPTPlayerTrack
 @property(copy, nonatomic) NSDictionary *metadata;
+
+- (id)artistName;
 @end
 
 @interface SPTPlayerState
@@ -41,4 +43,13 @@
 @property(readonly, nonatomic) SPTPlayerTrack *currentMetadata;
 
 - (void)skipToNextTrack;
+@end
+
+
+
+@interface SPTNowPlayingInformationUnitViewModel
+
+- (void)navigateToCurrentArtist;
+- (id)getMainArtistNameFromTrackMetadata:(id)arg1;
+- (id)getArtistsFromTrackMetadata:(id)arg1;
 @end
